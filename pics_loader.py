@@ -4,19 +4,53 @@ import re
 from urllib.parse import urljoin
 import urllib.request
 import os
+from tqdm import tqdm  # для прогресс-бара заргузки картинок
 
 
-def sort_pics(pics_dir):  # сортирует картинки по размеру
+def sort_files(sorting_dir, files_list):
+    """
+    Раскладывает файлы по трём папкам: large, medium, small
+
+    :param sorting_dir: директория в которой лежат файлы, которые нужно рассортировать
+    :param files_list: список файлов, которые будут рассортрованы
+    """
+    for dir_name in ["large", "medium", "small"]:
+        try:
+            os.mkdir(os.path.join(sorting_dir, dir_name))
+        except FileExistsError:
+            pass
+    for file_name in files_list:
+        file_size = os.stat(os.path.join(sorting_dir, file_name)).st_size
+        print(file_size)
+        if file_size >= 1048576:
+            category = "large"
+        elif 512000 <= file_size < 1048576:
+            category = "medium"
+        else:
+            category = "small"
+        os.replace(os.path.join(sorting_dir, file_name), os.path.join(sorting_dir, category, file_name))
     return
 
 
 # Параметры работы программы:
-download_dir = "C:\\playground\\pics_parser\\pics\\"  # куда будут скачиваться картинки
-existed_pics = [re.match(r'(.*\.png|.*\.jpg)', i).group() for i in os.listdir(download_dir)]
-# existed_pics - картинки, которые уже есть на компьютере, чтобы не скачивать их повторно.
-url = 'https://boards.4channel.org/w/thread/2198850/vector-thread-requests-sharing'  # откуда скачиваем
+# Директория, куда будут загружаться файлы. Если такой нет, то она будет создана.
+download_dir = "downloaded_pics"
+parent_dir = os.getcwd()
+download_path = os.path.join(parent_dir, download_dir)
+try:
+    os.mkdir(download_path)
+except FileExistsError:
+    pass
+print("Картинки будут загружены в папку: {}".format(download_path))
 
-base_url = re.match(r'^(http:\/\/|https:\/\/)?[^\/: \n]*', url).group()  # корневой адрес сайта
+existed_pics = [re.match(r'(.*\.png|.*\.jpg)', file_name).group() for file_name in os.listdir(download_path)]
+# existed_pics - картинки, которые уже есть в заданной директории, узнаём их чтобы не скачивать повторно.
+
+# откуда скачиваем
+url = 'https://boards.4channel.org/w/thread/2198850/vector-thread-requests-sharing'
+
+# корневой адрес сайта
+base_url = re.match(r'^(http:\/\/|https:\/\/)?[^\/: \n]*', url).group()
 response = requests.get(url)
 soup = BeautifulSoup(response.text, 'html.parser')
 links = []
@@ -27,16 +61,20 @@ for link in soup.find_all('img'):
     links.append(urljoin(base_url, link.get('src')))
 
 download_links = {}
-for link in links:  # задаём словарь вида {ссылка : имя файла} из тех ссылок, которые ведут на картинки
+# задаём словарь вида {ссылка : имя файла} из тех ссылок, которые ведут на картинки
+for link in links:
     if re.match(r'(.*\.png|.*\.jpg)', link):
         download_links[link] = re.search(r'[^/]*\.(png|jpg)', link).group()
 
 pic_counter = 0  # счетчик скаченных картинок
-for link, pic_name in download_links.items():  # скачиваем картинки
+for link, pic_name in tqdm(download_links.items()):  # скачиваем картинки
     if pic_name not in existed_pics:
-        with open(download_dir + pic_name, "wb") as file:
+        with open(os.path.join(download_path, pic_name), "wb") as file:
             response = requests.get(link)
             file.write(response.content)
             pic_counter += 1
 
-print('Всего новых файлов скачено:', pic_counter)
+print("Всего новых файлов скачено:", pic_counter)
+print("Начинаю сортировку файлов...")
+sort_files(download_path, download_links.values())
+print("Сортировка закончена! Программа завершена")
