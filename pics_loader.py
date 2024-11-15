@@ -1,11 +1,37 @@
+# TODO: limitation on the size of the downloaded image
+# TODO: run a benchmark: download + then sort OR download and sort at the same time
+
 import requests
 from bs4 import BeautifulSoup
 import re
 from urllib.parse import urljoin
 import urllib.request
 import os
-from tqdm import tqdm  # для прогресс-бара заргузки картинок
+from tqdm import tqdm
+from pathlib import Path
+from collections import deque
 
+
+
+class ImagesScrapper:
+    def __init__(self, url: str, output_dir: Path, buffer_size: int,):
+        self.url = url
+        self.output_dir = output_dir
+        self.buffer_size = buffer_size
+        self.buffer = deque()
+
+    def reset_url(self, new_url):
+        self.url = new_url
+        self.buffer.clear()
+
+    def parse(self):
+        pass
+
+    def download_images(self):
+        pass
+
+    def _dump_buffer(self):
+        pass
 
 def sort_files(sorting_dir, files_list):
     """
