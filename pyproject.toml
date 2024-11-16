@@ -10,6 +10,7 @@ python = "^3.10"
 tqdm = "^4.67.0"
 bs4 = "^0.0.2"
 requests = "^2.32.3"
+cssutils = "^2.11.1"
 
 
 [build-system]
