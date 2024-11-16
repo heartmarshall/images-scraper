@@ -1,9 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import re
-from urllib.parse import urljoin
-import urllib.request
-import os
 from tqdm import tqdm
 from pathlib import Path
 from collections import deque
@@ -34,9 +30,6 @@ class ImagesDownloader:
         return self.min_img_size <= size <= self.max_img_size
 
     def _save_buffer(self):
-        """
-        Saves all images from the buffer to disk and clears the buffer.
-        """
         print(f"Saving {len(self.buffer)} images from the buffer...")
         while self.buffer:
             file_name, image_data = self.buffer.popleft()
@@ -101,9 +94,6 @@ class ImagesScrapper:
             return []
 
     def parse(self) -> List[str]:
-        """
-        Parses the HTML page by URL and extracts image links.
-        """
         try:
             response = requests.get(self.url)
             response.raise_for_status()
